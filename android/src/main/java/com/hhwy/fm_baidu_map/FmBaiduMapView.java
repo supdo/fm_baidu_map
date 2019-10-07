@@ -283,6 +283,20 @@ public class FmBaiduMapView{
             e.printStackTrace();
         }
     }
+
+    /**
+     * 获取当前窗口的坐标
+     * @return
+     */
+    public HashMap getBounds(){
+        HashMap<String,Object> m = new HashMap<>();
+        LatLngBounds bounds = _bmp.getMapStatus().bound;
+        m.put("ne_latitude", bounds.northeast.latitude);
+        m.put("ne_longitude", bounds.northeast.longitude);
+        m.put("sw_latitude", bounds.southwest.latitude);
+        m.put("sw_longitude", bounds.southwest.longitude);
+        return m;
+    }
     /**
      * 设置定位点
      * @param latitude 经度
@@ -626,6 +640,21 @@ public class FmBaiduMapView{
                     txt.visible(obj.getBoolean("visible"));
                 }
                 option = txt;
+            }else if(type.equalsIgnoreCase("polygon")){ //add by kukei, 2019-10-08
+                JSONArray points = obj.getJSONArray("points");
+                List<LatLng> pts = new ArrayList<LatLng>();
+                for( int i=0; i<points.length();++i){
+                    JSONObject item = points.getJSONObject(i);
+                    pts.add(new LatLng(item.getDouble("latitude"),item.getDouble("longitude")));
+                }
+                PolygonOptions mPolygonOptions = new PolygonOptions().points(pts);
+                if ( obj.has("fillColor")){
+                    mPolygonOptions.fillColor(obj.getInt("fillColor"));
+                }
+                if ( obj.has("width") && obj.has("color")){
+                    mPolygonOptions.stroke(new Stroke(obj.getInt("width"), obj.getInt("color")));
+                }
+                option = mPolygonOptions;
             }
             // 在地图上显示
             if ( option != null && addToMap ) {

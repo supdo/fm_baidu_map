@@ -257,4 +257,9 @@ class FmBaiduMap {
       },
     );
   }
+
+  Future getBounds() async {
+    Object bounds = await _eventChannel.invokeMethod("getBounds");
+    return bounds;
+  }
 }
