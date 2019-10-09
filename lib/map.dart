@@ -58,6 +58,7 @@ class FmBaiduMap {
     FmBaiduMapStatus onMapStatusChange,
     // 坐标状态改变结束
     FmBaiduMapStatus onMapStatusChangeFinish,
+    dynamic onClickOverlay,
   }) {
     _eventChannel = new MethodChannel(_name)
       ..setMethodCallHandler((MethodCall methodCall) {
@@ -72,6 +73,9 @@ class FmBaiduMap {
         if (methodCall.method == "onMapStatusChangeFinish" &&
             onMapStatusChangeFinish != null) {
           onMapStatusChangeFinish(FmMapStatusInfo.create(methodCall.arguments));
+        }
+        if (methodCall.method == "onClickOverlay" && onClickOverlay != null) {
+          onClickOverlay(methodCall.arguments);
         }
         if (onMessage != null) {
           onMessage(methodCall.method, methodCall.arguments as Map);

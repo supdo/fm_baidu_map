@@ -3,6 +3,7 @@ package com.hhwy.fm_baidu_map;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.CircleOptions;
+import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -24,6 +25,7 @@ import com.baidu.mapapi.search.district.DistrictResult;
 import com.baidu.mapapi.search.district.DistrictSearch;
 import com.baidu.mapapi.search.district.DistrictSearchOption;
 import com.baidu.mapapi.search.district.OnGetDistricSearchResultListener;
+import com.baidu.mapapi.utils.SpatialRelationUtil;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -164,7 +166,7 @@ public class FmBaiduMapView{
         if ( _overlays.containsKey(layer) ){
             FmOverlayItem it = _overlays.get(layer).get(id);
             if ( it != null ){
-                _ftb.invokeMethod("click_overlay",_ftb.JsonObject2HashMap(it.config));
+                _ftb.invokeMethod("onClickOverlay",_ftb.JsonObject2HashMap(it.config));
             }
         }
     }
@@ -205,6 +207,20 @@ public class FmBaiduMapView{
                 return false;
             }
         });
+
+        _bmp.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+//                SpatialRelationUtil spatialRelationUtil =  new SpatialRelationUtil();
+//                boolean isInFlag =  spatialRelationUtil.isPolygonContainsPoint(latLng,latLng);
+            }
+
+            @Override
+            public boolean onMapPoiClick(MapPoi mapPoi) {
+                return false;
+            }
+        });
+
         _bmp.setOnMapStatusChangeListener(new BaiduMap.OnMapStatusChangeListener() {
             @Override
             public void onMapStatusChangeStart(MapStatus mapStatus) {
@@ -380,12 +396,14 @@ public class FmBaiduMapView{
             // 先取图层
             if ( obj.has("layer") ){
                 FmOverlay item = _overlays.get(obj.getString("layer"));
-                // 无id时，删除所有图层元素
-                if ( obj.has("id")){
-                    item.remove(obj.getString("id"));
-                }else{
-                    item.removeAll();
-                    _overlays.remove(obj.getString("layer"));
+                if(item != null) {
+                    // 无id时，删除所有图层元素
+                    if (obj.has("id")) {
+                        item.remove(obj.getString("id"));
+                    } else {
+                        item.removeAll();
+                        _overlays.remove(obj.getString("layer"));
+                    }
                 }
             }else{
                 if ( !obj.has("id")) {

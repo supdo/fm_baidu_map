@@ -6,6 +6,7 @@ import './types.dart';
 class FmMapOverlaysMark extends FmMapOverlays {
   FmMapOverlaysMark({
     this.id,
+    this.commId,
     this.layer = "0",
     this.visible = true,
     this.zIndex,
@@ -27,6 +28,7 @@ class FmMapOverlaysMark extends FmMapOverlays {
     }
   }
   String id;
+  int commId;
   String layer;
   bool visible;
   int zIndex;
@@ -70,6 +72,7 @@ class FmMapOverlaysMark extends FmMapOverlays {
       var uuid = new Uuid();
       id = uuid.v1();
     }
+    commId = m["commId"] ?? 0;
     layer = m["layer"] ?? "0";
     visible = m["visible"] ?? true;
     zIndex = m["zIndex"];
@@ -98,6 +101,7 @@ class FmMapOverlaysMark extends FmMapOverlays {
     Map option = {
       "id": id,
       "type": "mark",
+      "commId": commId,
       "layer": layer,
       "visible": visible,
       "latitude": point.latitude,
