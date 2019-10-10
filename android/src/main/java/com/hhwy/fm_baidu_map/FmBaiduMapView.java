@@ -12,6 +12,7 @@ import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.Overlay;
 import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.Polygon;
 import com.baidu.mapapi.map.PolygonOptions;
 import com.baidu.mapapi.map.Polyline;
 import com.baidu.mapapi.map.PolylineOptions;
@@ -54,20 +55,26 @@ public class FmBaiduMapView{
     private TextureMapView _view;
     private BaiduMap _bmp;
     private final FmBaiduMapViewFactory _factory;
-    private final HashMap<String, FmOverlay>_overlays = new HashMap<>();
+    private final HashMap<String, FmOverlay> _overlays = new HashMap<>();
     class FmOverlayItem{
         Overlay overlay;
         String id;
         JSONObject config;
     }
     class FmOverlay{
-        final private HashMap <String,FmOverlayItem>_list= new HashMap<>();
+        final private HashMap<String,FmOverlayItem> _list = new HashMap<>();
+
         void add(String id,Overlay overlay,JSONObject config){
             FmOverlayItem item = new  FmOverlayItem();
             item.id = id;
             item.config = config;
             item.overlay = overlay;
             _list.put(id,item);
+        }
+
+
+        HashMap<String,FmOverlayItem> getList(){
+            return _list;
         }
 
         /**
@@ -153,7 +160,7 @@ public class FmBaiduMapView{
             _list.clear();
         }
     }
-    void _clickOverlay(Overlay overlay){
+    void _clickOverlay(Overlay overlay, String methodName){
         if ( overlay == null ){
             return;
         }
@@ -166,7 +173,58 @@ public class FmBaiduMapView{
         if ( _overlays.containsKey(layer) ){
             FmOverlayItem it = _overlays.get(layer).get(id);
             if ( it != null ){
-                _ftb.invokeMethod("onClickOverlay",_ftb.JsonObject2HashMap(it.config));
+                _ftb.invokeMethod(methodName, _ftb.JsonObject2HashMap(it.config));
+            }
+        }
+    }
+
+    void _mapClick(LatLng latLng){
+        if(_bmp.getMapStatus().zoom < 16){return;}
+        try {
+            SpatialRelationUtil spatialRelationUtil =  new SpatialRelationUtil();
+            for(String layName : _overlays.keySet()){
+                if(layName.startsWith("polygon_")){
+                    for(FmOverlayItem item : _overlays.get(layName).getList().values()){
+//                                JSONArray points = item.config.getJSONArray("points");
+//                                List<LatLng>  latLngList =
+                        boolean isInFlag = spatialRelationUtil.isPolygonContainsPoint(((Polygon)item.overlay).getPoints() ,latLng);
+                        if(isInFlag){
+//                                    _ftb.invokeMethod("onClickPolygon", item.config);
+                            _clickOverlay(item.overlay, "onClickPolygon");
+                            return;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void _mapLongClick(LatLng latLng){
+        double tmpZoom = _bmp.getMapStatus().zoom;
+        if(tmpZoom < 16){return;}
+        double radius = (22 - tmpZoom) * 6;
+//        System.out.print(String.format("_mapLongClick, zoom: %f, radius: %f", tmpZoom, radius));
+        SpatialRelationUtil spatialRelationUtil =  new SpatialRelationUtil();
+        for(String layName : _overlays.keySet()){
+            if(layName.startsWith("polygon_")){
+                for(FmOverlayItem item : _overlays.get(layName).getList().values()){
+                    boolean isInFlag = spatialRelationUtil.isPolygonContainsPoint(((Polygon)item.overlay).getPoints() ,latLng);
+                    if(isInFlag){
+                        _clickOverlay(item.overlay, "onLongClickOverlay");
+                        return;
+                    }
+                }
+            }
+            if(layName.startsWith("marker_")){
+                for(FmOverlayItem item : _overlays.get(layName).getList().values()){
+                    boolean isInFlag = spatialRelationUtil.isCircleContainsPoint(((Marker)item.overlay).getPosition(), (int)radius ,latLng);
+                    if(isInFlag){
+                        _clickOverlay(item.overlay, "onLongClickOverlay");
+                        return;
+                    }
+                }
             }
         }
     }
@@ -177,7 +235,7 @@ public class FmBaiduMapView{
     FmBaiduMapView(String name,PluginRegistry.Registrar registrar, FmBaiduMapViewFactory factory){
         _registrar = registrar;
         _ftb = new FmToolsBase(this, name, registrar);
-        _view=new TextureMapView(registrar.activity());
+        _view = new TextureMapView(registrar.activity());
         _bmp = _view.getMap();
         _bmp.setMyLocationEnabled(true);
         _factory = factory;
@@ -196,14 +254,14 @@ public class FmBaiduMapView{
         _bmp.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                _clickOverlay(marker);
+                _clickOverlay(marker, "onClickOverlay");
                 return true;
             }
         });
         _bmp.setOnPolylineClickListener(new BaiduMap.OnPolylineClickListener() {
             @Override
             public boolean onPolylineClick(Polyline polyline) {
-                _clickOverlay(polyline);
+                _clickOverlay(polyline, "onClickOverlay");
                 return false;
             }
         });
@@ -211,39 +269,45 @@ public class FmBaiduMapView{
         _bmp.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-//                SpatialRelationUtil spatialRelationUtil =  new SpatialRelationUtil();
-//                boolean isInFlag =  spatialRelationUtil.isPolygonContainsPoint(latLng,latLng);
+                _mapClick(latLng);
             }
 
             @Override
             public boolean onMapPoiClick(MapPoi mapPoi) {
+                _mapClick(mapPoi.getPosition());
                 return false;
+            }
+        });
+        _bmp.setOnMapLongClickListener(new BaiduMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                _mapLongClick(latLng);
             }
         });
 
         _bmp.setOnMapStatusChangeListener(new BaiduMap.OnMapStatusChangeListener() {
             @Override
             public void onMapStatusChangeStart(MapStatus mapStatus) {
-                _onMapStatus("setOnMapStatusChangeListener",mapStatus);
+                _onMapStatus("setOnMapStatusChangeListener",mapStatus, -1);
             }
 
             @Override
             public void onMapStatusChangeStart(MapStatus mapStatus, int i) {
-                _onMapStatus("onMapStatusChangeStart",mapStatus);
+                _onMapStatus("onMapStatusChangeStart",mapStatus, i);
             }
 
             @Override
             public void onMapStatusChange(MapStatus mapStatus) {
-                _onMapStatus("onMapStatusChange",mapStatus);
+                _onMapStatus("onMapStatusChange",mapStatus, -1);
             }
 
             @Override
             public void onMapStatusChangeFinish(MapStatus mapStatus) {
-                _onMapStatus("onMapStatusChangeFinish",mapStatus);
+                _onMapStatus("onMapStatusChangeFinish",mapStatus, -1);
             }
         });
     }
-    private  void _onMapStatus(String name,MapStatus mapStatus){
+    private  void _onMapStatus(String name,MapStatus mapStatus, int i){
         HashMap<String,Object> m = new HashMap<>();
         m.put("latitude",mapStatus.target.latitude);
         m.put("longitude",mapStatus.target.longitude);
@@ -252,6 +316,7 @@ public class FmBaiduMapView{
         m.put("rotate",mapStatus.rotate);
         m.put("screenX",mapStatus.targetScreen.x);
         m.put("screenY",mapStatus.targetScreen.y);
+        m.put("gesture",i);
         _ftb.invokeMethod(name,m);
     }
 
@@ -312,6 +377,9 @@ public class FmBaiduMapView{
         m.put("sw_latitude", bounds.southwest.latitude);
         m.put("sw_longitude", bounds.southwest.longitude);
         return m;
+    }
+    public float getZoom(){
+        return _bmp.getMapStatus().zoom;
     }
     /**
      * 设置定位点
@@ -629,7 +697,7 @@ public class FmBaiduMapView{
                     mk.anchor(0.5f,0.5f);
                 }
                 option = mk;
-                System.out.println(option);
+//                System.out.println(option);
             }else if( type.equalsIgnoreCase("text")){
                 LatLng llText = new LatLng(obj.getDouble("latitude"), obj.getDouble("longitude"));
                 //构建TextOptions对象

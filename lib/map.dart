@@ -59,6 +59,8 @@ class FmBaiduMap {
     // 坐标状态改变结束
     FmBaiduMapStatus onMapStatusChangeFinish,
     dynamic onClickOverlay,
+    dynamic onClickPolygon,
+    dynamic onLongClickOverlay,
   }) {
     _eventChannel = new MethodChannel(_name)
       ..setMethodCallHandler((MethodCall methodCall) {
@@ -76,6 +78,13 @@ class FmBaiduMap {
         }
         if (methodCall.method == "onClickOverlay" && onClickOverlay != null) {
           onClickOverlay(methodCall.arguments);
+        }
+        if (methodCall.method == "onClickPolygon" && onClickPolygon != null) {
+          onClickPolygon(methodCall.arguments);
+        }
+        //onLongClickOverlay
+        if (methodCall.method == "onLongClickOverlay" && onLongClickOverlay != null) {
+          onLongClickOverlay(methodCall.arguments as Map);
         }
         if (onMessage != null) {
           onMessage(methodCall.method, methodCall.arguments as Map);
@@ -265,5 +274,10 @@ class FmBaiduMap {
   Future getBounds() async {
     Object bounds = await _eventChannel.invokeMethod("getBounds");
     return bounds;
+  }
+
+  Future getZoom() async {
+    double zoom = await _eventChannel.invokeMethod("getZoom");
+    return zoom;
   }
 }

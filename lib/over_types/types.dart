@@ -74,6 +74,8 @@ class FmMapStatusInfo {
   // 屏幕坐标
   int screenX;
   int screenY;
+  //手势
+  int gesture;
 
   // 从map初始化
   void fromMap(Map m) {
@@ -89,6 +91,8 @@ class FmMapStatusInfo {
     // 屏幕坐标
     screenX = m["screenX"];
     screenY = m["screenY"];
+    //手势
+    gesture = m["gesture"];
   }
 
   // 创建地图状态信息
