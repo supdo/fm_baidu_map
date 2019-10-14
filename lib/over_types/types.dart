@@ -40,6 +40,12 @@ class FmBaiduLocationInfo {
   // 方向
   double bearing;
 
+  double radius;
+
+  int locType;
+  String locTypeDesc;
+  String locTypeDescCN;
+
   /// 从map初始化
   void fronMap(Map m) {
     coordType = m["coordType"];
@@ -53,6 +59,47 @@ class FmBaiduLocationInfo {
     // 海拔
     altitude = m["altitude"];
     bearing = m["bearing"];
+    radius = m["radius"];
+    locType = m["locType"];
+    locTypeDesc = m["locTypeDesc"];
+    switch(locType) {
+      case 61:
+//        this.setLocTypeDescription("Location failed beacuse we can not get any loc information!");
+        locTypeDescCN = "GPS定位成功。";
+        break;
+      case 62:
+//        this.setLocTypeDescription("Location failed beacuse we can not get any loc information!");
+        locTypeDescCN = "定位失败，请检查GPS。";
+        break;
+      case 63:
+      case 67:
+//        this.setLocTypeDescription("Offline location failed, please check the net (wifi/cell)!");
+        locTypeDescCN = "定位失败，请检查WIFI或网络。";
+        break;
+      case 66:
+//        this.setLocTypeDescription("Offline location successful!");
+        locTypeDescCN = "离线定位成功！";
+        break;
+      case 161:
+//        this.setLocTypeDescription("NetWork location successful!");
+        locTypeDescCN = "网络定位成功！";
+        break;
+      case 162:
+//        this.setLocTypeDescription("NetWork location failed because baidu location service can not decrypt the request query, please check the so file !");
+        locTypeDescCN = "NetWork location failed because baidu location service can not decrypt the request query, please check the so file ！";
+        break;
+      case 167:
+//        this.setLocTypeDescription("NetWork location failed because baidu location service can not caculate the location!");
+        locTypeDescCN = "NetWork location failed because baidu location service can not caculate the location！";
+        break;
+      case 505:
+//        this.setLocTypeDescription("NetWork location failed because baidu location service check the key is unlegal, please check the key in AndroidManifest.xml!");
+        locTypeDescCN = "NetWork location failed because baidu location service check the key is unlegal, please check the key in AndroidManifest.xml!";
+        break;
+      default:
+//        this.setLocTypeDescription("UnKnown!");
+        locTypeDescCN = "未知错误。";
+    }
   }
 
   /// 从map创建

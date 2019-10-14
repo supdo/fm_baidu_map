@@ -23,7 +23,7 @@ class FmBaiduLocation {
     // 监听事件
     _eventChannel = new MethodChannel(_name)
       ..setMethodCallHandler((MethodCall methodCall) {
-        if (onLocation != null) {
+        if (methodCall.method == "onLocation" && onLocation != null) {
           onLocation(FmBaiduLocationInfo.create(methodCall.arguments));
         }
       });
@@ -39,7 +39,7 @@ class FmBaiduLocation {
     await _eventChannel.invokeMethod("stop");
   }
 
-  /// 结束定位
+  /// 定位是否开始
   Future isStarted() async {
     return await _eventChannel.invokeMethod("isStarted");
   }
