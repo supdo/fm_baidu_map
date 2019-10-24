@@ -16,6 +16,7 @@ import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.platform.PlatformView;
 import io.flutter.plugin.platform.PlatformViewFactory;
 
+@SuppressWarnings("unchecked")
 public class FmBaiduMapViewFactory extends PlatformViewFactory {
     final private HashMap<String, FmBaiduMapView> _list= new HashMap<>();
 
